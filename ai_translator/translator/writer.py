@@ -81,7 +81,7 @@ class Writer:
             for page in book.pages:
                 for content in page.contents:
                     if content.status:
-                        if( content.content_type == ContentType.TEXT):
+                        if  content.content_type == ContentType.TEXT:
                             text = content.translation
                             output_file.write(text+"\n\n")
                         
@@ -93,8 +93,8 @@ class Writer:
                             # body = '\n'.join(['| ' + ' | '.join(row) + ' |' for row in table.values.tolist()]) + '\n\n'
                             body = '\n'.join(['| ' + ' | '.join(str(cell) for cell in row) + ' |' for row in table.values.tolist()]) + '\n\n'
                             output_file.write(header + separator + body)
-            if page != book.pages[-1]:
-                output_file.write('---\n\n')
+                if page != book.pages[-1]:
+                    output_file.write('---\n\n')
         LOG.info(f"翻译完成:{output_file_path}")
 
             
