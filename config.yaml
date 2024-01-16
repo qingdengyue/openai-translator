@@ -5,4 +5,4 @@ GLMModel:
   model_url: "your_chatglm_model_url"
 common:
   book: "tests/test.pdf"
-  file_format: "markdown"      
+  file_format: "pdf"      
