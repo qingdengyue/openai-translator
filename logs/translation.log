@@ -2320,3 +2320,30 @@ Listed As Table:
 2024-01-16 14:44:13.245 | INFO     | translator.writer:_save_translated_book_pdf:31 - pdf_file_path:tests/test.pdf
 2024-01-16 14:44:13.245 | INFO     | translator.writer:_save_translated_book_pdf:32 - 开始翻译:tests/test_translated.pdf
 2024-01-16 14:44:13.264 | INFO     | translator.writer:_save_translated_book_pdf:73 - 翻译完成:tests/test_translated.pdf
+2024-01-16 15:19:25.841 | DEBUG    | translator.pdf_parser:parse_pdf:43 - [raw_text]
+ Every word is translated
+Listed As Table:
+2024-01-16 15:19:25.843 | DEBUG    | translator.pdf_parser:parse_pdf:48 - [table]
+[rowNo, ArticleName, UOM, Remarks] [1, apple, PC, none] [2, fruits, PC, none] [3, glass, PC, none]
+2024-01-16 15:19:25.843 | DEBUG    | translator.pdf_translator:translate_pdf:20 - 翻译为中文:Every word is translated
+Listed As Table:
+2024-01-16 15:19:28.068 | INFO     | translator.pdf_translator:translate_pdf:22 - 每个单词都被翻译了
+列出为表格：
+2024-01-16 15:19:28.069 | DEBUG    | translator.pdf_translator:translate_pdf:20 - 翻译为中文,保持时间（空格，分隔符），以表格形式返回：
+[rowNo, ArticleName, UOM, Remarks] [1, apple, PC, none] [2, fruits, PC, none] [3, glass, PC, none]
+2024-01-16 15:19:30.951 | INFO     | translator.pdf_translator:translate_pdf:22 - 行号   文章名称  计量单位  备注
+1      苹果       个        无
+2      水果       个        无
+3      玻璃       个        无
+2024-01-16 15:19:30.951 | DEBUG    | book.content:set_translation:51 - 行号   文章名称  计量单位  备注
+1      苹果       个        无
+2      水果       个        无
+3      玻璃       个        无
+2024-01-16 15:19:30.951 | DEBUG    | book.content:set_translation:56 - [['行号', '文章名称', '计量单位', '备注'], ['1', '苹果', '个', '无'], ['2', '水果', '个', '无'], ['3', '玻璃', '个', '无']]
+2024-01-16 15:19:30.951 | DEBUG    | book.content:set_translation:59 -   行号 文章名称 计量单位 备注
+0  1   苹果    个  无
+1  2   水果    个  无
+2  3   玻璃    个  无
+2024-01-16 15:19:30.954 | INFO     | translator.writer:_save_translated_book_pdf:31 - pdf_file_path:tests/test.pdf
+2024-01-16 15:19:30.954 | INFO     | translator.writer:_save_translated_book_pdf:32 - 开始翻译:tests/test_translated.pdf
+2024-01-16 15:19:30.971 | INFO     | translator.writer:_save_translated_book_pdf:73 - 翻译完成:tests/test_translated.pdf
