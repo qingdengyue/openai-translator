@@ -1,0 +1,7 @@
+<h1>Django Image Uploading</h1>
+<ul>
+    {% for q in object_list%}
+    <h2>{{q.title}}</h2>
+    <img src="{{q.cover.url}}" alt="{{q.title}}">
+    {% endfor%}
+</ul>
