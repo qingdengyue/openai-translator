@@ -4,7 +4,19 @@ from .models import FileSpeedLimitedConfiguration, Question, Choice,FileUpload
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse,reverse_lazy
 from django.views import generic
-from .forms import FileTranslatorForm
+from .forms import FileTranslatorForm,FilesForm
+from django.contrib import messages
+from django.core.files.storage import default_storage
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models.fields.files import FieldFile
+from django.views.generic import FormView
+from django.views.generic.base import TemplateView
+
+# http://yuji.wordpress.com/2013/01/30/django-form-field-in-initial-data-requires-a-fieldfile-instance/
+class FakeField:
+    storage = default_storage
+
+fieldfile = FieldFile(None, FakeField, "dummy.txt")
 
 # Create your views here.
 def index(request):
@@ -82,3 +94,19 @@ class CreateFileTranslatorView(generic.CreateView):
     form_class = FileTranslatorForm
     template_name = "translator/filetranslator.html"
     success_url =reverse_lazy("translator:home")
+
+
+class GetParametersMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["layout"] = self.request.GET.get("layout", None)
+        context["size"] = self.request.GET.get("size", None)
+        return context
+
+
+class FormWithFilesView(GetParametersMixin, FormView):
+    template_name = "translator/filetranslator.html"
+    form_class = FilesForm
+
+    def get_initial(self):
+        return {}
