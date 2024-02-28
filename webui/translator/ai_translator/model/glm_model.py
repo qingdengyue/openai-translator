@@ -1,7 +1,7 @@
 import requests
 import simplejson
 
-from model import Model
+from .model import Model
 
 
 class GLMModel(Model):

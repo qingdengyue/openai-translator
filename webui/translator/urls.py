@@ -7,4 +7,5 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("files",views.HomePageView.as_view(),name="home"),
     path("files/upload",views.FormWithFilesView.as_view(),name="translator_file"),
+    path("files/uploadFileAndTranslate",views.uploadFileAndTranslate,name="uploadFileAndTranslate"),
 ]

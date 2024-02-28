@@ -25,6 +25,11 @@ class FileTranslatorForm(forms.ModelForm):
 
 
 class FilesForm(forms.Form):
-    pdfUpload = forms.FileField(widget=forms.ClearableFileInput,label="Please upload file(pdf):")
+    pdfUpload = forms.FileField(widget=forms.ClearableFileInput,label="Please upload file(pdf):",required=True)
 
+    use_required_attribute = False
+
+
+class FileDownloadForm(forms.Form):
+    downloadUrl=forms.FileField(label="Download");
     use_required_attribute = False

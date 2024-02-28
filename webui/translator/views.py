@@ -1,16 +1,35 @@
 from django.shortcuts import render
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect,JsonResponse
 from .models import FileSpeedLimitedConfiguration, Question, Choice,FileUpload
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse,reverse_lazy
 from django.views import generic
-from .forms import FileTranslatorForm,FilesForm
+from .forms import FileTranslatorForm,FilesForm,FileDownloadForm
 from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models.fields.files import FieldFile
 from django.views.generic import FormView
 from django.views.generic.base import TemplateView
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from .ai_translator.model import OpenAIModel
+from .ai_translator.translator import PDFTranslator
+
+import uuid
+import random
+import os
+upload_dir=os.path.join(settings.MEDIA_ROOT,'pdf')
+if not os.path.exists(upload_dir):
+    os.makedirs(upload_dir)
+
+
+
+class LocalFileSystemStorage(FileSystemStorage):
+    pass
+
+
+fs=LocalFileSystemStorage(location=upload_dir)
 
 # http://yuji.wordpress.com/2013/01/30/django-form-field-in-initial-data-requires-a-fieldfile-instance/
 class FakeField:
@@ -107,6 +126,34 @@ class GetParametersMixin:
 class FormWithFilesView(GetParametersMixin, FormView):
     template_name = "translator/filetranslator.html"
     form_class = FilesForm
+    success_url="/files/download"
 
     def get_initial(self):
         return {}
+
+
+
+
+def uploadFileAndTranslate(request):
+    if request.method == 'POST':
+        pdfFile=request.FILES['file']
+        
+        _,file_extension=os.path.splitext(pdfFile.name)
+        fileSavePath=f'{uuid.uuid4().hex}{file_extension}'
+        saved_file_path=os.path.join(upload_dir,fileSavePath)
+        with open(saved_file_path,"wb+") as destination:
+            for chunk in pdfFile.chunks():
+                destination.write(chunk)
+        
+        print(f'pdf file cached to: {saved_file_path}.will be removed after be translated')
+        print(f'Start to translator')
+
+        model = OpenAIModel(model="gpt-3.5-turbo", api_key=os.environ["OPENAI_API_KEY"])
+        translator = PDFTranslator(model)
+        translator.translate_pdf(saved_file_path, "pdf")
+        # read pdf file and translate to en_US
+        # save local file and gen url to front
+        return JsonResponse({"success":True})  
+    return JsonResponse({"success":True})       
+    
+

@@ -4,8 +4,8 @@ import time
 import os
 import openai
 
-from model import Model
-from utils import LOG
+from .model import Model
+from ..utils import LOG
 from openai import OpenAI
 
 
