@@ -15,6 +15,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from .ai_translator.model import OpenAIModel
 from .ai_translator.translator import PDFTranslator
+from .ai_translator.utils import LOG
 from .forms import getFormat, getLanguage
 
 import uuid
@@ -60,7 +61,7 @@ def uploadFileAndTranslate(request):
         fileLanguage = getLanguage(request.POST.get("fileLanguage"))
         fileFormat = getFormat(request.POST.get("fileFormat"))
 
-        print(f'TargetLanguage:{fileLanguage},TargetFormat:{fileFormat}')
+        LOG.info(f'TargetLanguage:{fileLanguage},TargetFormat:{fileFormat}')
 
         # 生成本地缓存的文件名称，并且保存文件信息，方便后续读取翻译
         _, file_extension = os.path.splitext(pdfFile.name)
@@ -79,9 +80,9 @@ def uploadFileAndTranslate(request):
             fileSuffix='.md'    
 
         # 输出保存后的文件路径
-        print(
+        LOG.info(
             f'pdf file cached to: {saved_file_path}.will be removed after be translated')
-        print(f'Start to translator')
+        LOG.info(f'Start to translator')
         output_file_path = saved_file_path.replace(".pdf", f'_translated{fileSuffix}')
 
         # 加在OpenAI模型
