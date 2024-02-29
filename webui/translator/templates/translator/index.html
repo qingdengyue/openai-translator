@@ -1,9 +1,0 @@
-{% if file_speed_limited_configuration_list  %}
-<ul>
-    {% for q in  file_speed_limited_configuration_list %}
-       <li><a href="{% url 'translator:detail' q.id %}">{{q.user_type}}</a></li>
-    {% endfor %}
-</ul>
-{% else %}
-    <p>No configurations are available</p>
-{% endif %}

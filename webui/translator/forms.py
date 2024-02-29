@@ -7,29 +7,44 @@ from django_bootstrap5.widgets import RadioSelectButtonGroup
 from .models import FileUpload
 
 
-RADIO_CHOICES = (("1", "Radio 1"), ("2", "Radio 2"))
+SUPPORT_LANGUAGE = (
+    ("1", "简体中文"),
+    ("2", "繁体中文"),
+    ("3", "English"),
+    ("4", "日本語"),
+)
+SUPPORT_LANGUAGE_DEFAULT = "1"
 
-MEDIA_CHOICES = (
-    ("Audio", (("vinyl", "Vinyl"), ("cd", "CD"))),
-    ("Video", (("vhs", "VHS Tape"), ("dvd", "DVD"))),
-    ("unknown", "Unknown"),
+
+def getLanguage(code):
+    for lang_code, lang_name in SUPPORT_LANGUAGE:
+        if lang_code == code:
+            return lang_name
+    return "简体中文"
+
+
+SUPPORT_FORMAT = (
+    ("1", "PDF"),
+    ("2", "Markdown"),
 )
 
 
+SUPPORT_FORMAT_DEFAULT = "1"
 
-class FileTranslatorForm(forms.ModelForm):
 
-    class Meta:
-        model = FileUpload
-        fields=["title","cover"]
+def getFormat(format):
+    for format_code, format_name in SUPPORT_FORMAT:
+        if format_code == format:
+            return format_name
+    return "pdf"
 
 
 class FilesForm(forms.Form):
-    pdfUpload = forms.FileField(widget=forms.ClearableFileInput,label="Please upload file(pdf):",required=True)
+    pdfUpload = forms.FileField(
+        widget=forms.ClearableFileInput, label="Please upload file(pdf):", required=True)
+    fileLanguageList = forms.ChoiceField(
+        choices=SUPPORT_LANGUAGE, label="Target Language:", required=True, initial=SUPPORT_LANGUAGE_DEFAULT)
+    fileFormatList = forms.ChoiceField(
+        choices=SUPPORT_FORMAT, label="Traget Format:", required=True, initial=SUPPORT_FORMAT_DEFAULT)
+    use_required_attribute = True
 
-    use_required_attribute = False
-
-
-class FileDownloadForm(forms.Form):
-    downloadUrl=forms.FileField(label="Download");
-    use_required_attribute = False

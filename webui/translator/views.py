@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from django.http import HttpResponse, Http404, HttpResponseRedirect,JsonResponse
-from .models import FileSpeedLimitedConfiguration, Question, Choice,FileUpload
+from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
+from .models import FileSpeedLimitedConfiguration, Question, Choice, FileUpload
 from django.shortcuts import render, get_object_or_404
-from django.urls import reverse,reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import generic
-from .forms import FileTranslatorForm,FilesForm,FileDownloadForm
+from .forms import FilesForm
 from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -15,105 +15,24 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from .ai_translator.model import OpenAIModel
 from .ai_translator.translator import PDFTranslator
+from .forms import getFormat, getLanguage
 
 import uuid
 import random
 import os
-upload_dir=os.path.join(settings.MEDIA_ROOT,'pdf')
+upload_dir = os.path.join(settings.MEDIA_ROOT, 'file')
 if not os.path.exists(upload_dir):
     os.makedirs(upload_dir)
-
 
 
 class LocalFileSystemStorage(FileSystemStorage):
     pass
 
 
-fs=LocalFileSystemStorage(location=upload_dir)
+fs = LocalFileSystemStorage(location=upload_dir)
 
-# http://yuji.wordpress.com/2013/01/30/django-form-field-in-initial-data-requires-a-fieldfile-instance/
-class FakeField:
-    storage = default_storage
-
-fieldfile = FieldFile(None, FakeField, "dummy.txt")
 
 # Create your views here.
-def index(request):
-    file_speed_limited_configuration_list = FileSpeedLimitedConfiguration.objects.order_by("id")[:2]
-    context = {
-        "file_speed_limited_configuration_list": file_speed_limited_configuration_list
-    }
-    return render(request, "translator/index.html", context)
-
-
-def detail(request, config_id):
-    try:
-        configuration = get_object_or_404(FileSpeedLimitedConfiguration, pk=config_id)
-    except FileSpeedLimitedConfiguration.DoesNotExist:
-        raise Http404("Configuration does not exist")
-    return render(request, "translator/detail.html", {"configuration": configuration})
-
-
-def questionindex(request):
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    context = {
-        "latest_question_list": latest_question_list
-    }
-    return render(request, "translator/question/index.html", context)
-
-class QuestionIndexView(generic.ListView):
-   template_name="translator/question/index.html"
-   context_object_name="latest_question_list"
-
-   def get_queryset(self):
-       return Question.objects.order_by("-pub_date")[:5]
-
-
-class QuestionDetailView(generic.DetailView):
-      model = Question
-      template_name = "translator/question/detail.html"
-
-
-class QuestionResultsView(generic.DetailView):
-      model = Question
-      template_name = "translator/question/results.html"
-
-def questiondetail(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "translator/question/detail.html", {"question": question})
-
-
-def questionresults(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "translator/question/results.html", {"question": question})
-
-
-def questionvote(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    try:
-        selected_choice = question.choice_set.get(pk=request.POST["choice"])
-    except (KeyError, Choice.DoesNotExist):
-        return render(request, "", {
-            "question": question,
-            "error_message": "You didn't select a choice."
-        })
-    else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        return HttpResponseRedirect(reverse("translator:questionresults", args=(question.id,)))
-
-
-class HomePageView(generic.ListView):
-    model = FileUpload
-    template_name = "translator/home.html"
-
-
-class CreateFileTranslatorView(generic.CreateView):
-    model = FileUpload
-    form_class = FileTranslatorForm
-    template_name = "translator/filetranslator.html"
-    success_url =reverse_lazy("translator:home")
-
 
 class GetParametersMixin:
     def get_context_data(self, **kwargs):
@@ -126,34 +45,61 @@ class GetParametersMixin:
 class FormWithFilesView(GetParametersMixin, FormView):
     template_name = "translator/filetranslator.html"
     form_class = FilesForm
-    success_url="/files/download"
+    success_url = "/files/download"
 
     def get_initial(self):
         return {}
 
 
-
-
 def uploadFileAndTranslate(request):
     if request.method == 'POST':
-        pdfFile=request.FILES['file']
-        
-        _,file_extension=os.path.splitext(pdfFile.name)
-        fileSavePath=f'{uuid.uuid4().hex}{file_extension}'
-        saved_file_path=os.path.join(upload_dir,fileSavePath)
-        with open(saved_file_path,"wb+") as destination:
+        # 待翻译的 PDF文件
+        pdfFile = request.FILES['file']
+
+        # 转换后的语言和格式
+        fileLanguage = getLanguage(request.POST.get("fileLanguage"))
+        fileFormat = getFormat(request.POST.get("fileFormat"))
+
+        print(f'TargetLanguage:{fileLanguage},TargetFormat:{fileFormat}')
+
+        # 生成本地缓存的文件名称，并且保存文件信息，方便后续读取翻译
+        _, file_extension = os.path.splitext(pdfFile.name)
+        fileSavePath = f'{uuid.uuid4().hex}{file_extension}'
+        saved_file_path = os.path.join(upload_dir, fileSavePath)
+        with open(saved_file_path, "wb+") as destination:
             for chunk in pdfFile.chunks():
                 destination.write(chunk)
-        
-        print(f'pdf file cached to: {saved_file_path}.will be removed after be translated')
-        print(f'Start to translator')
 
-        model = OpenAIModel(model="gpt-3.5-turbo", api_key=os.environ["OPENAI_API_KEY"])
+
+        #解析文件后缀
+        fileSuffix=".pdf"
+        if fileFormat.lower() =='pdf':
+            fileSuffix='.pdf'
+        elif fileFormat.lower()=='markdown':
+            fileSuffix='.md'    
+
+        # 输出保存后的文件路径
+        print(
+            f'pdf file cached to: {saved_file_path}.will be removed after be translated')
+        print(f'Start to translator')
+        output_file_path = saved_file_path.replace(".pdf", f'_translated{fileSuffix}')
+
+        # 加在OpenAI模型
+        model = OpenAIModel(model="gpt-3.5-turbo",
+                            api_key=os.environ["OPENAI_API_KEY"])
+
+        # 初始化翻译
         translator = PDFTranslator(model)
-        translator.translate_pdf(saved_file_path, "pdf")
+
+        # 调用翻译方法进行文件处理
+        translator.translate_pdf(
+            saved_file_path, output_file_path=output_file_path, file_format=fileFormat, target_language=fileLanguage)
         # read pdf file and translate to en_US
         # save local file and gen url to front
-        return JsonResponse({"success":True})  
-    return JsonResponse({"success":True})       
-    
-
+        # 构造前端使用的URL地址方便用户下载
+        return JsonResponse({
+            "success": True,
+            "downloadUrl": f"{settings.MEDIA_URL}file/{fileSavePath.replace(file_extension,f'_translated{fileSuffix}')}",
+            "fileName": fileSavePath.replace(file_extension, f'_translated{fileSuffix}')
+        })
+    return JsonResponse({"success": True})

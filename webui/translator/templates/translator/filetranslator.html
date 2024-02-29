@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,48 +9,71 @@
   {% bootstrap_css %}
   {% bootstrap_messages %}
 </head>
+
 <body>
 
-    {% block content %}
+  {% block content %}
 
-    <form id="uploadFileForm" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+  <form id="uploadFileForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
 
-        {% bootstrap_form form layout=layout %}
+    {% bootstrap_form form layout=layout %}
 
-        {% bootstrap_button button_type="submit" content="OK" %}
-        {% bootstrap_button button_type="reset" content="Cancel" %}
-    </form>
+    {% bootstrap_button button_type="submit" content="OK" %}
+    {% bootstrap_button button_type="reset" content="Cancel" %}
+  </form>
 
-{% endblock %}
-<div id="alert" style="display:none;"></div>
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-{% bootstrap_javascript %}
-<script>
-  $(function(){
-    $('#uploadFileForm').on('submit', function(event) {
-      event.preventDefault();
-      var formData=new FormData();
-      formData.append('file',$("#id_pdfUpload").prop("files")[0])
-      formData.append('csrfmiddlewaretoken',$($("#uploadFileForm").children("input[name=csrfmiddlewaretoken]")[0]).val())
-      $.ajax({
-        url: '{% url "translator:uploadFileAndTranslate" %}',
-        type: 'POST',
-        data: formData,
-        contentType: false,
-        cache: false,
-        processData:false,
-        success: function(response) {
-          if (response.success) {
-            $('#uploadFileForm').hide();
-            $('#alert').html('<div class="alert alert-success">Thank you for your message!</div>').show();
-          } else {
-            $('#alert').html('<div class="alert alert-danger">' + response.errors + '</div>').show();
+  {% endblock %}
+  <!-- Modal -->
+  <div class="modal fade" id="downloadFileModel" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Translate Completed</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <a id="downloadFile" href="" target="_blank"></a>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  {% bootstrap_javascript %}
+  <script>
+    $(function () {
+      var downloadFileModel = new bootstrap.Modal(document.getElementById('downloadFileModel'), {
+      })
+      $('#uploadFileForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = new FormData();
+        formData.append('file', $("#id_pdfUpload").prop("files")[0])
+        formData.append('csrfmiddlewaretoken', $($("#uploadFileForm").children("input[name=csrfmiddlewaretoken]")[0]).val())
+        formData.append('fileLanguage', $("#id_fileLanguageList").val())
+        formData.append('fileFormat', $("#id_fileFormatList").val())
+        $.ajax({
+          url: '{% url "translator:uploadFileAndTranslate" %}',
+          type: 'POST',
+          data: formData,
+          contentType: false,
+          cache: false,
+          processData: false,
+          success: function (response) {
+            if (response.success) {
+              $("#downloadFile").attr('href', response.downloadUrl);
+              $("#downloadFile").text(response.fileName);
+              downloadFileModel.show();
+            } else {
+
+            }
           }
-        }
+        });
       });
-    });
-  })
-</script>
+    })
+  </script>
 </body>
+
 </html>
