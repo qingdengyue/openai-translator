@@ -17,6 +17,7 @@ from .ai_translator.model import OpenAIModel
 from .ai_translator.translator import PDFTranslator
 from .ai_translator.utils import LOG
 from .forms import getFormat, getLanguage
+from django.views.decorators.csrf import csrf_exempt
 
 import uuid
 import random
@@ -52,6 +53,7 @@ class FormWithFilesView(GetParametersMixin, FormView):
         return {}
 
 
+@csrf_exempt
 def uploadFileAndTranslate(request):
     if request.method == 'POST':
         # 待翻译的 PDF文件

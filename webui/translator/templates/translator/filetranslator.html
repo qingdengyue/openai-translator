@@ -51,7 +51,7 @@
         event.preventDefault();
         var formData = new FormData();
         formData.append('file', $("#id_pdfUpload").prop("files")[0])
-        formData.append('csrfmiddlewaretoken', $($("#uploadFileForm").children("input[name=csrfmiddlewaretoken]")[0]).val())
+        // formData.append('csrfmiddlewaretoken', $($("#uploadFileForm").children("input[name=csrfmiddlewaretoken]")[0]).val())
         formData.append('fileLanguage', $("#id_fileLanguageList").val())
         formData.append('fileFormat', $("#id_fileFormatList").val())
         $.ajax({
